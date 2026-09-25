@@ -1,0 +1,28 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Arquivos gerados pelo Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Banco de dados local (é criado automaticamente ao iniciar a API)
+devshowcase.db
+*.db
+*.sqlite3
+
+# Senhas e configurações locais
+.env
+.env.*
+
+# Configurações de editores
+.vscode/
+.idea/
+
+# Arquivos do sistema
+Thumbs.db
+desktop.ini
+.DS_Store
