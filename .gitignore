@@ -26,3 +26,9 @@ devshowcase.db
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# PDF de entrega (cada grupo gera o seu com o link do video)
+ENTREGA.pdf
+
+# Imagens temporarias
+_*.png

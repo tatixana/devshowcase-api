@@ -92,6 +92,23 @@ Agora os IDs começam do 1 e batem com o roteiro.
 
 ---
 
+## Depois de gravar: montar a entrega
+
+A professora pede **um PDF com 2 links**: o do GitHub e o do vídeo.
+
+1. Suba o vídeo no YouTube como **"Não listado"**
+2. Copie o link do vídeo
+3. Dois cliques em **`GERAR_PDF_ENTREGA`**
+4. Cole o link (clique com o **botão direito** para colar) e aperte Enter
+5. Ele cria o **`ENTREGA.pdf`** e abre para vocês conferirem
+
+É esse `ENTREGA.pdf` que vocês enviam na tarefa.
+
+> 📄 O **[ROTEIRO.pdf](ROTEIRO.pdf)** tem todas as falas do vídeo, já pronto para imprimir
+> ou deixar aberto numa outra janela durante a gravação.
+
+---
+
 ## Deu erro?
 
 | Apareceu | Faça |
