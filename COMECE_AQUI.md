@@ -1,55 +1,38 @@
 # COMECE AQUI
 
-Uma página só. Ligar a API e testar.
+## Ligar a API: dois cliques
+
+Abra a pasta do projeto e dê **dois cliques** no arquivo:
+
+# 🔵 `INICIAR`
+
+Pronto. Ele faz tudo sozinho.
+
+- Na **primeira vez** demora 1 ou 2 minutos (está preparando tudo). Pode esperar.
+- Nas outras vezes abre em segundos.
+- O navegador abre sozinho no final.
+
+⚠️ **Não feche a janela azul** que ficar aberta. Ela é a API ligada.
+Para desligar, é só fechar essa janela.
+
+> Se aparecer um aviso do Windows sobre "proteger o computador":
+> clique em **Mais informações** → **Executar assim mesmo**.
+> Isso acontece porque o arquivo veio da internet.
 
 ---
 
-## 1. Abrir o terminal na pasta certa
+## Testar
 
-Abra a pasta `devshowcase-api` (a que tem a pasta `app` dentro).
-Clique na barra de endereço lá em cima, apague tudo, digite **cmd** e aperte **Enter**.
+### Jeito rápido — o navegador que abriu sozinho
 
-## 2. Ligar a API
+Ele já abre em **http://127.0.0.1:8000/docs**
 
-**Só na primeira vez:**
+Clique num endpoint → **Try it out** → **Execute**. Pronto, testou.
 
-```
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-**Todas as vezes:**
-
-```
-.venv\Scripts\activate
-uvicorn app.main:app --reload
-```
-
-✅ Deu certo quando aparecer `Application startup complete.`
-
-⚠️ **Não feche essa janela preta.** Ela é a API ligada.
-Para desligar: **Ctrl + C**.
-
-## 3. Ver funcionando (2 segundos)
-
-No navegador: **http://127.0.0.1:8000**
-
-Apareceu `{"message":"DevShowcase API está funcionando"}`? Está pronto.
-
----
-
-## 4. Testar
-
-### Jeito rápido (sem instalar nada)
-
-No navegador: **http://127.0.0.1:8000/docs**
-Clique num endpoint → **Try it out** → **Execute**.
-
-### No Postman (é o que vai no vídeo)
+### No Postman — é o que vai no vídeo
 
 Em cada teste: clique no **+**, escolha **GET** ou **POST**, cole a URL.
-Se for **POST**, vá em **Body** → marque **raw** → troque **Text** por **JSON** → cole o JSON → **Send**.
+Se for **POST**: aba **Body** → marque **raw** → troque **Text** por **JSON** → cole → **Send**.
 
 Faça **nesta ordem** (os IDs dependem disso):
 
@@ -96,26 +79,29 @@ Faça **nesta ordem** (os IDs dependem disso):
 
 ---
 
-## 5. Deu erro?
+## Antes de gravar o vídeo
 
-| Apareceu | Faça |
-|---|---|
-| `'python' não é reconhecido` | Instale o Python em python.org e **marque "Add python.exe to PATH"** |
-| `'uvicorn' não é reconhecido` | Faltou `.venv\Scripts\activate` (precisa aparecer `(.venv)` na linha) |
-| `Could not import module "app.main"` | Terminal na pasta errada. Tem que ser a pasta que tem `app` dentro |
-| No Postman: `Could not send request` | A API não está ligada. Volte ao passo 2 |
-| Os IDs não são 1 e 2 | Ctrl + C → apague o arquivo `devshowcase.db` → ligue de novo |
+Os cadastros dos ensaios ficam salvos. Se não limpar, os IDs não vão ser 1 e 2.
+
+1. Feche a **janela azul** da API
+2. Dois cliques em **`LIMPAR_BANCO`** → digite **S** → Enter
+3. Dois cliques em **`INICIAR`** de novo
+4. **Não clique em Send em nada** até a gravação começar
+
+Agora os IDs começam do 1 e batem com o roteiro.
 
 ---
 
-## Antes de gravar o vídeo
+## Deu erro?
 
-1. **Ctrl + C** no terminal
-2. Apague o arquivo **`devshowcase.db`** da pasta
-3. Ligue de novo: `uvicorn app.main:app --reload`
-4. **Não clique em Send em nada** até a gravação começar
-
-Assim os IDs começam do 1 e batem com o roteiro.
+| Apareceu | Faça |
+|---|---|
+| Janela dizendo **"FALTA INSTALAR O PYTHON"** | Ela abre o site sozinha. Baixe, instale **marcando "Add python.exe to PATH"**, reinicie o computador e clique no INICIAR de novo |
+| Janela dizendo **"DEU ERRO AO BAIXAR AS BIBLIOTECAS"** | É falta de internet. Confira a conexão e clique no INICIAR de novo |
+| Aviso do Windows sobre proteger o computador | **Mais informações** → **Executar assim mesmo** |
+| No Postman: `Could not send request` | A API não está ligada. Dois cliques no INICIAR |
+| Os IDs não são 1 e 2 | Use o **LIMPAR_BANCO** (seção acima) |
+| O LIMPAR_BANCO diz que não conseguiu apagar | A API ainda está ligada. Feche a janela azul e tente de novo |
 
 ---
 
@@ -123,5 +109,5 @@ Assim os IDs começam do 1 e batem com o roteiro.
 
 - **[ROTEIRO_APRESENTACAO.md](ROTEIRO_APRESENTACAO.md)** — quem fala o quê no vídeo 👈 o importante
 - [GUIA_POSTMAN.md](GUIA_POSTMAN.md) — o Postman explicado com calma, tela por tela
-- [PASSO_A_PASSO.md](PASSO_A_PASSO.md) — instalação detalhada e mais soluções de erro
+- [PASSO_A_PASSO.md](PASSO_A_PASSO.md) — como fazer pelos comandos, sem o INICIAR
 - [README.md](README.md) — descrição do trabalho (entidades, relacionamentos, endpoints)

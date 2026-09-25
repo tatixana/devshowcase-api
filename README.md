@@ -6,7 +6,8 @@ Trabalho acadêmico: **Modelagem de domínio, persistência e endpoints básicos
 
 Repositório: https://github.com/tatixana/devshowcase-api
 
-> 👉 **Só quer ligar e testar? Leia o [COMECE_AQUI.md](COMECE_AQUI.md)** — uma página só.
+> 👉 **Só quer ligar e testar?** Dois cliques no arquivo **`INICIAR`** e pronto.
+> Detalhes em [COMECE_AQUI.md](COMECE_AQUI.md) — uma página só.
 
 ## Objetivo
 

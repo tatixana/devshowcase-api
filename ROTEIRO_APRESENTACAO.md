@@ -224,16 +224,12 @@
 
 - [ ] Webcam funcionando.
 - [ ] Microfone funcionando.
-- [ ] API iniciada.
-- [ ] Terminal aberto.
-- [ ] Postman aberto.
-- [ ] GitHub aberto.
-- [ ] URLs preparadas.
-- [ ] JSONs preparados.
+- [ ] Banco limpo com o `LIMPAR_BANCO` (para os IDs começarem do 1).
+- [ ] API ligada pelo `INICIAR` (janela azul aberta).
+- [ ] Postman aberto, com as 8 requisições já montadas e salvas.
 - [ ] Requisições testadas antes da gravação.
-- [ ] IDs conferidos.
-- [ ] Banco preparado.
-- [ ] Não fechar o terminal durante a apresentação.
+- [ ] GitHub aberto em https://github.com/tatixana/devshowcase-api
+- [ ] Não fechar a janela azul da API durante a apresentação.
 
 ### IMPORTANTE
 
@@ -244,15 +240,13 @@ Na hora de gravar, o perfil da Ana Silva poderia ficar com ID 2 ou 3, e o Python
 
 Por isso, **logo antes de gravar, comece com um banco novo:**
 
-1. No terminal onde a API está rodando, aperte **Ctrl + C** para parar a API.
-2. Abra a pasta do projeto `devshowcase-api` no Explorador de Arquivos.
-3. Encontre o arquivo **`devshowcase.db`**, clique com o botão direito e escolha **Excluir**.
-   (Ou, no terminal, digite: `del devshowcase.db`)
-4. Inicie a API de novo:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-5. Um banco novo e vazio é criado sozinho. Agora os IDs começam do **1** de novo.
+1. Feche a **janela azul** da API.
+2. Na pasta do projeto, dê dois cliques em **`LIMPAR_BANCO`**.
+3. Digite **S** e aperte **Enter**.
+4. Dê dois cliques em **`INICIAR`** para ligar a API de novo.
 
-> Não abra o `devshowcase.db` em outro programa enquanto a API está rodando.
-> Depois de apagar o banco, **não clique em Send** em nenhuma requisição até começar a gravar.
+Pronto: os IDs começam do **1** outra vez.
+
+> Depois de limpar, **não cliquem em Send** em nenhuma requisição até começar a gravar.
+> Se o LIMPAR_BANCO disser que não conseguiu apagar, é porque a janela da API
+> ainda está aberta. Feche e tente de novo.
