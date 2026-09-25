@@ -1,4 +1,12 @@
-from pydantic import BaseModel, ConfigDict, HttpUrl, TypeAdapter, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+)
 
 # ---------- Funções de validação reutilizadas pelos schemas ----------
 
@@ -108,5 +116,50 @@ class ProjectResponse(BaseModel):
     repository_url: str | None
     demo_url: str | None
     profile_id: int
+    upvotes: int
+    rating_average: float
     profile: ProfileResponse
     technologies: list[TechnologyResponse]
+
+
+# ---------- FEEDBACK ----------
+
+class FeedbackCreate(BaseModel):
+    """Dados de ENTRADA para deixar um feedback em um projeto."""
+    author_name: str
+    comment: str
+    rating: int = Field(ge=1, le=5, description="Nota de 1 a 5")
+
+    @field_validator("author_name", "comment")
+    @classmethod
+    def checar_textos(cls, valor):
+        return validar_texto_obrigatorio(valor)
+
+
+class FeedbackResponse(BaseModel):
+    """Dados de SAÍDA de um feedback."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    author_name: str
+    comment: str
+    rating: int
+    project_id: int
+
+
+class FeedbackCriadoResponse(BaseModel):
+    """Resposta ao criar um feedback: o feedback e a nota média atualizada."""
+    feedback: FeedbackResponse
+    rating_average: float
+    total_feedbacks: int
+
+
+# ---------- PAGINAÇÃO ----------
+
+class ProjectsPage(BaseModel):
+    """Lista de projetos dividida em páginas."""
+    total: int
+    pagina: int
+    por_pagina: int
+    total_paginas: int
+    projetos: list[ProjectResponse]

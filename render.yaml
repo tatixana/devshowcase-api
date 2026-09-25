@@ -1,0 +1,18 @@
+# Configuracao do deploy no Render.
+# O Render le este arquivo sozinho quando o repositorio e conectado.
+services:
+  - type: web
+    name: devshowcase-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.15"
+      # DATABASE_URL e preenchida no painel do Render
+      # com a URL do PostgreSQL do Supabase.
+      - key: DATABASE_URL
+        sync: false

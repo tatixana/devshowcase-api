@@ -1,8 +1,10 @@
-"""Gera os PDFs de entrega do trabalho.
+"""Gera os PDFs do trabalho.
 
 Uso:
-    python gerar_pdf.py roteiro          -> cria ROTEIRO.pdf
-    python gerar_pdf.py entrega LINK     -> cria ENTREGA.pdf com o link do YouTube
+    python gerar_pdf.py roteiro                 -> ROTEIRO.pdf (falas do video)
+    python gerar_pdf.py deploy                  -> GUIA_DEPLOY.pdf (passo a passo da nuvem)
+    python gerar_pdf.py entrega LINK_YT         -> ENTREGA.pdf (etapa 1: 2 links)
+    python gerar_pdf.py entrega LINK_YT LINK_API-> ENTREGA.pdf (etapa 2: 3 links)
 """
 
 import sys
@@ -65,7 +67,7 @@ def linha():
 # ---------------------------------------------------------------- ENTREGA
 
 
-def gerar_entrega(link_youtube):
+def gerar_entrega(link_youtube, link_api=None):
     doc = SimpleDocTemplate(
         "ENTREGA.pdf", pagesize=A4,
         leftMargin=2.5 * cm, rightMargin=2.5 * cm,
@@ -88,15 +90,18 @@ def gerar_entrega(link_youtube):
         Paragraph("Links da entrega", H1),
     ]
 
-    tabela = Table(
-        [
-            [Paragraph("<b>Repositório no GitHub</b><br/>(código-fonte)", TXT),
-             Paragraph(f'<link href="{GITHUB}"><font color="#1B4F8C">{GITHUB}</font></link>', TXT)],
-            [Paragraph("<b>Vídeo da apresentação</b><br/>(YouTube, não listado)", TXT),
-             Paragraph(f'<link href="{link_youtube}"><font color="#1B4F8C">{link_youtube}</font></link>', TXT)],
-        ],
-        colWidths=[5.2 * cm, 10.3 * cm],
-    )
+    def celula(rotulo, url):
+        return [Paragraph(rotulo, TXT),
+                Paragraph(f'<link href="{url}"><font color="#1B4F8C">{url}</font></link>', TXT)]
+
+    linhas = [celula("<b>Repositório no GitHub</b><br/>(código-fonte)", GITHUB)]
+    if link_api:
+        linhas.append(celula(
+            "<b>API em produção</b><br/>(para testes online)", link_api))
+    linhas.append(celula(
+        "<b>Vídeo da apresentação</b><br/>(YouTube, não listado)", link_youtube))
+
+    tabela = Table(linhas, colWidths=[5.2 * cm, 10.3 * cm])
     tabela.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("BACKGROUND", (0, 0), (0, -1), CLARO),
@@ -128,18 +133,50 @@ def gerar_entrega(link_youtube):
         "POST /api/technologies &ndash; cadastro de tecnologia com validações",
         "GET /api/technologies &ndash; listagem de todas as tecnologias",
         "POST /api/projects &ndash; cadastro de projeto com validações",
-        "GET /api/projects &ndash; listagem de projetos",
+        "GET /api/projects &ndash; listagem de projetos, com filtro por tecnologia e paginação",
     ]
+    if link_api:
+        endpoints += [
+            "POST /api/projects/{id}/feedbacks &ndash; nota de 1 a 5 e comentário, "
+            "com cálculo da nota média do projeto",
+            "PUT /api/projects/{id}/upvote &ndash; incrementa as curtidas do projeto",
+            "GET /api/projects/{id}/feedbacks &ndash; feedbacks de um projeto",
+        ]
     hist.append(ListFlowable(
         [ListItem(Paragraph(e, TXT), leftIndent=18) for e in endpoints],
         bulletType="bullet", start="circle", leftIndent=12))
 
+    if link_api:
+        hist += [
+            Spacer(1, 10),
+            Paragraph("Tratamento de erros e documentação", H1),
+            Paragraph(
+                "A API possui um manipulador global de exceções: todos os erros saem "
+                "no mesmo formato, em português, com os campos <b>erro</b>, "
+                "<b>detalhe</b> e <b>codigo</b>. São tratados os erros 400, 404, 405, "
+                "422 (validação) e 500 (erro inesperado), além de falhas de banco de "
+                "dados. A documentação interativa fica no Swagger, em "
+                "<b>/docs</b> do endereço da API em produção.", TXT),
+            Spacer(1, 10),
+            Paragraph("Deploy em produção", H1),
+            Paragraph(
+                "O banco de dados é um <b>PostgreSQL</b> provisionado na nuvem pelo "
+                "Supabase. A API está publicada no <b>Render</b>, com deploy contínuo "
+                "a partir do repositório no GitHub: a cada novo commit na branch main, "
+                "o Render publica a versão nova automaticamente. As credenciais do "
+                "banco não ficam no código: são lidas da variável de ambiente "
+                "<b>DATABASE_URL</b>, configurada no painel do Render.", TXT),
+        ]
+
     hist += [
         Spacer(1, 10),
         Paragraph(
-            "As tecnologias usadas foram Python, FastAPI, SQLAlchemy, Pydantic, "
-            "SQLite e Uvicorn. O repositório é público e possui arquivo .gitignore, "
-            "que impede o envio do banco de dados local e do ambiente virtual.", TXT),
+            "As tecnologias usadas foram Python, FastAPI, SQLAlchemy, Pydantic "
+            "e Uvicorn"
+            + (", com PostgreSQL em produção e SQLite no desenvolvimento. "
+               if link_api else ", com banco de dados SQLite. ")
+            + "O repositório é público e possui arquivo .gitignore, que impede o "
+            "envio do banco local, do ambiente virtual e de qualquer credencial.", TXT),
     ]
 
     doc.build(hist)
@@ -339,6 +376,211 @@ def gerar_roteiro():
     print("ROTEIRO.pdf gerado com sucesso.")
 
 
+# ---------------------------------------------------------------- DEPLOY
+
+
+PASSO = s("passo", fontName="Helvetica-Bold", fontSize=12,
+          textColor=HexColor("#1A1A1A"), spaceBefore=12, spaceAfter=4)
+AVISO = s("aviso", fontSize=10, leading=14, leftIndent=10, spaceAfter=8,
+          textColor=HexColor("#8A4B00"), backColor=HexColor("#FFF6E5"),
+          borderPadding=6)
+
+
+def gerar_deploy():
+    doc = SimpleDocTemplate(
+        "GUIA_DEPLOY.pdf", pagesize=A4,
+        leftMargin=2.2 * cm, rightMargin=2.2 * cm,
+        topMargin=2 * cm, bottomMargin=1.8 * cm,
+        title="DevShowcase API - Guia de deploy", author="Grupo DevShowcase API",
+    )
+
+    h = [
+        Paragraph("Guia de deploy", TITULO),
+        Paragraph("Colocar a DevShowcase API no ar, de graça", SUB),
+        Paragraph(
+            "São duas contas gratuitas: o <b>Supabase</b> guarda o banco de dados "
+            "PostgreSQL, e o <b>Render</b> publica a API. Nenhuma das duas pede "
+            "cartão de crédito. Leva mais ou menos 30 minutos.", TXT),
+        Paragraph(
+            "Faça na ordem: primeiro o banco (Parte 1), depois a API (Parte 2). "
+            "A Parte 2 precisa de uma informação que só aparece na Parte 1.", PEQ),
+        linha(),
+
+        # ------------------------------------------------ parte 1
+        Paragraph("Parte 1 &ndash; Criar o banco no Supabase", H1),
+
+        Paragraph("Passo 1. Criar a conta", PASSO),
+        Paragraph(
+            "Entre em <b>supabase.com</b> e clique em <b>Start your project</b>. "
+            "Pode entrar com a conta do GitHub (a mesma da Tatilane) &ndash; é o mais "
+            "rápido, porque já vai estar logada.", TXT),
+
+        Paragraph("Passo 2. Criar o projeto", PASSO),
+        Paragraph(
+            "Clique em <b>New project</b> e preencha:", TXT),
+        Paragraph(
+            "&bull; <b>Name:</b> devshowcase<br/>"
+            "&bull; <b>Database Password:</b> clique em <b>Generate a password</b> e "
+            "<b>copie essa senha para um bloco de notas</b>. Você vai precisar dela "
+            "no Passo 3.<br/>"
+            "&bull; <b>Region:</b> deixe a que vier, ou escolha South America (São Paulo).", TXT),
+        Paragraph(
+            "Clique em <b>Create new project</b> e espere. Demora uns 2 minutos "
+            "enquanto o banco é criado.", TXT),
+        Paragraph(
+            "ATENÇÃO: essa senha não aparece de novo depois. Se perder, dá para "
+            "gerar outra em Settings &rarr; Database &rarr; Reset database password.", AVISO),
+
+        Paragraph("Passo 3. Copiar o endereço do banco", PASSO),
+        Paragraph(
+            "Com o projeto criado, clique no botão <b>Connect</b> (fica no topo da "
+            "página).", TXT),
+        Paragraph(
+            "Procure a opção <b>Session pooler</b> e copie o endereço que aparece "
+            "embaixo dela. Ele começa com <b>postgresql://</b> e é parecido com isto:", TXT),
+        Paragraph(
+            "postgresql://postgres.abcdefgh:[YOUR-PASSWORD]@aws-0-sa-east-1."
+            "pooler.supabase.com:5432/postgres", CODE),
+        Paragraph(
+            "No lugar de <b>[YOUR-PASSWORD]</b> (incluindo os colchetes), escreva a "
+            "senha que você copiou no Passo 2. O endereço final fica assim:", TXT),
+        Paragraph(
+            "postgresql://postgres.abcdefgh:SuaSenhaAqui@aws-0-sa-east-1."
+            "pooler.supabase.com:5432/postgres", CODE),
+        Paragraph(
+            "Guarde esse endereço completo no bloco de notas. Ele é a "
+            "<b>DATABASE_URL</b> e será usado no Passo 6.", TXT),
+        Paragraph(
+            "Use o <b>Session pooler</b>, não o Direct connection. O Render não "
+            "consegue se conectar pelo Direct connection.", AVISO),
+        Paragraph(
+            "Essa senha é uma credencial: não coloquem em nenhum arquivo do projeto, "
+            "não mandem para o GitHub e não mostrem na tela durante o vídeo.", AVISO),
+
+        PageBreak(),
+
+        # ------------------------------------------------ parte 2
+        Paragraph("Parte 2 &ndash; Publicar a API no Render", H1),
+
+        Paragraph("Passo 4. Criar a conta", PASSO),
+        Paragraph(
+            "Entre em <b>render.com</b> e clique em <b>Get Started</b>. "
+            "Escolha entrar com o <b>GitHub</b>, usando a conta da Tatilane "
+            "(a mesma dona do repositório).", TXT),
+
+        Paragraph("Passo 5. Criar o serviço da API", PASSO),
+        Paragraph(
+            "No painel, clique em <b>Add new</b> &rarr; <b>Web Service</b>.", TXT),
+        Paragraph(
+            "Vai aparecer a lista dos repositórios do GitHub. Procure "
+            "<b>devshowcase-api</b> e clique em <b>Connect</b>.", TXT),
+        Paragraph(
+            "Se o repositório não aparecer, clique em <b>Configure account</b> e "
+            "autorize o Render a ver os repositórios.", PEQ),
+        Paragraph(
+            "O projeto já tem um arquivo <b>render.yaml</b>, então o Render preenche "
+            "quase tudo sozinho. Confira se ficou assim:", TXT),
+        Paragraph(
+            "&bull; <b>Name:</b> devshowcase-api<br/>"
+            "&bull; <b>Branch:</b> main<br/>"
+            "&bull; <b>Build Command:</b> pip install -r requirements.txt<br/>"
+            "&bull; <b>Start Command:</b> uvicorn app.main:app --host 0.0.0.0 --port $PORT<br/>"
+            "&bull; <b>Instance Type:</b> Free", TXT),
+
+        Paragraph("Passo 6. Colocar a senha do banco", PASSO),
+        Paragraph(
+            "Ainda na mesma tela, procure <b>Environment Variables</b> "
+            "(ou <b>Advanced</b> &rarr; <b>Add Environment Variable</b>) e adicione:", TXT),
+        Paragraph(
+            "&bull; <b>Key (nome):</b> DATABASE_URL<br/>"
+            "&bull; <b>Value (valor):</b> o endereço completo que você guardou no Passo 3", TXT),
+        Paragraph(
+            "É assim que as credenciais ficam fora do código: o endereço do banco e a "
+            "senha ficam só aqui, no painel do Render.", PEQ),
+
+        Paragraph("Passo 7. Publicar", PASSO),
+        Paragraph(
+            "Clique em <b>Deploy Web Service</b> e espere. A primeira publicação "
+            "demora de 3 a 5 minutos. Vocês vão ver o texto do build rolando na tela.", TXT),
+        Paragraph(
+            "Deu certo quando aparecer <b>Live</b> em verde no topo da página, e no "
+            "final do log aparecer <b>Application startup complete</b>.", TXT),
+
+        PageBreak(),
+
+        # ------------------------------------------------ parte 3
+        Paragraph("Parte 3 &ndash; Conferir se funcionou", H1),
+        Paragraph(
+            "No topo da página do Render aparece o endereço público da API. "
+            "É parecido com:", TXT),
+        Paragraph("https://devshowcase-api.onrender.com", CODE),
+        Paragraph(
+            "<b>Esse é o link da API em produção que vai no PDF de entrega.</b> "
+            "Copie e guarde.", TXT),
+        Spacer(1, 6),
+        Paragraph("Abra no navegador, um de cada vez:", TXT),
+        Paragraph(
+            "&bull; <b>o endereço sozinho</b> &rarr; tem que aparecer "
+            "a mensagem &quot;DevShowcase API está funcionando&quot;<br/>"
+            "&bull; <b>o endereço + /docs</b> &rarr; abre o Swagger com todos os "
+            "endpoints<br/>"
+            "&bull; <b>o endereço + /api/technologies</b> &rarr; tem que aparecer "
+            "uma lista vazia: [ ]", TXT),
+        Paragraph(
+            "A lista vazia é o certo: o banco na nuvem começa sem nada. "
+            "Os cadastros do computador de vocês não vão para lá.", PEQ),
+        Spacer(1, 6),
+        Paragraph(
+            "Agora é só usar esse endereço no Postman no lugar de "
+            "http://127.0.0.1:8000, e cadastrar os dados da demonstração direto "
+            "na nuvem.", TXT),
+
+        Paragraph("Deploy contínuo (já vem ligado)", H1),
+        Paragraph(
+            "A partir de agora, toda vez que o código mudar no GitHub na branch main, "
+            "o Render publica a versão nova sozinho. Não precisa mexer em mais nada. "
+            "Dá para ver isso na aba <b>Events</b> do Render.", TXT),
+
+        Paragraph("Se der errado", H1),
+    ]
+
+    problemas = [
+        ["O que aparece", "O que fazer"],
+        ["No Render: <b>Build failed</b>",
+         "Abra o log e procure a linha em vermelho. Quase sempre é o "
+         "requirements.txt. Confira se o arquivo foi enviado para o GitHub."],
+        ["No Render: <b>Deploy failed</b> com erro de conexão ao banco",
+         "A DATABASE_URL está errada. Confira se trocou [YOUR-PASSWORD] pela senha "
+         "de verdade e se usou o <b>Session pooler</b> (não o Direct connection)."],
+        ["A primeira visita demora muito",
+         "Normal no plano gratuito: a API dorme depois de 15 minutos parada e leva "
+         "uns 50 segundos para acordar. Antes de gravar o vídeo, abra o endereço e "
+         "espere carregar."],
+        ["<b>password authentication failed</b>",
+         "A senha do banco está errada. Gere outra em Settings &rarr; Database &rarr; "
+         "Reset database password e atualize a DATABASE_URL no Render."],
+        ["Mudei o código e a API não mudou",
+         "Confira se o commit foi enviado com git push. Veja a aba Events do Render."],
+    ]
+    tabela = Table(
+        [[Paragraph(f"<b>{c}</b>" if i == 0 else c, PEQ) for c in linha_]
+         for i, linha_ in enumerate(problemas)],
+        colWidths=[5.5 * cm, 10 * cm])
+    tabela.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("BACKGROUND", (0, 0), (-1, 0), CLARO),
+        ("GRID", (0, 0), (-1, -1), 0.5, HexColor("#CCCCCC")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    h.append(tabela)
+
+    doc.build(h)
+    print("GUIA_DEPLOY.pdf gerado com sucesso.")
+
+
 if __name__ == "__main__":
     comando = sys.argv[1] if len(sys.argv) > 1 else "roteiro"
 
@@ -346,6 +588,9 @@ if __name__ == "__main__":
         if len(sys.argv) < 3 or not sys.argv[2].strip():
             print("Falta o link do YouTube.")
             sys.exit(1)
-        gerar_entrega(sys.argv[2].strip())
+        link_api = sys.argv[3].strip() if len(sys.argv) > 3 else None
+        gerar_entrega(sys.argv[2].strip(), link_api or None)
+    elif comando == "deploy":
+        gerar_deploy()
     else:
         gerar_roteiro()

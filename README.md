@@ -35,7 +35,9 @@ Iniciar o backend da plataforma DevShowcase com:
 | FastAPI | Criação dos endpoints da API |
 | SQLAlchemy | Comunicação com o banco (models e relacionamentos) |
 | Pydantic | Schemas/DTOs e validações |
-| SQLite | Banco de dados relacional (arquivo `devshowcase.db`) |
+| SQLite | Banco de dados no computador (arquivo `devshowcase.db`) |
+| PostgreSQL | Banco de dados em produção, na nuvem (Supabase) |
+| Render | Serviço que publica a API, com deploy contínuo do GitHub |
 | Uvicorn | Servidor que executa a API |
 | Git e GitHub | Versionamento e publicação do código |
 
@@ -46,7 +48,9 @@ Iniciar o backend da plataforma DevShowcase com:
 | **Profile** | Perfil do desenvolvedor | id, name, bio, github_url, linkedin_url |
 | **Project** | Um projeto do desenvolvedor | id, title, description, repository_url, demo_url, profile_id |
 | **Technology** | Uma tecnologia usada nos projetos | id, name |
-| **Feedback** | Uma opinião sobre um projeto | id, author_name, comment, project_id |
+| **Feedback** | Uma opinião sobre um projeto | id, author_name, comment, rating, project_id |
+
+O projeto guarda ainda dois campos calculados: `upvotes` (curtidas) e `rating_average` (nota média, recalculada a cada feedback novo).
 
 ## Relacionamentos
 
@@ -76,12 +80,42 @@ Profile 1 ──── N Project N ──── N Technology
 | Método | URL | O que faz | Sucesso |
 |---|---|---|---|
 | GET | `/` | Confirma que a API está funcionando | 200 |
+| GET | `/health` | Usado pela nuvem para saber se a API está de pé | 200 |
 | POST | `/api/profiles` | Cadastra um perfil | 201 |
 | GET | `/api/profiles/{id}` | Busca um perfil pelo ID | 200 |
 | POST | `/api/technologies` | Cadastra uma tecnologia | 201 |
 | GET | `/api/technologies` | Lista todas as tecnologias | 200 |
 | POST | `/api/projects` | Cadastra um projeto (com `profile_id` e `technology_ids`) | 201 |
-| GET | `/api/projects` | Lista os projetos com o perfil e as tecnologias relacionadas | 200 |
+| GET | `/api/projects` | Lista os projetos, com filtro por tecnologia e paginação | 200 |
+| POST | `/api/projects/{id}/feedbacks` | Cadastra nota de 1 a 5 e comentário, e recalcula a nota média | 201 |
+| GET | `/api/projects/{id}/feedbacks` | Lista os feedbacks de um projeto | 200 |
+| PUT | `/api/projects/{id}/upvote` | Soma uma curtida no projeto | 200 |
+
+### Filtro e paginação em `GET /api/projects`
+
+Sem nenhum parâmetro, devolve a lista completa de projetos.
+
+Com parâmetros, devolve o resultado dividido em páginas:
+
+| Parâmetro | Para que serve | Exemplo |
+|---|---|---|
+| `tecnologia` | Mostra só os projetos que usam aquela tecnologia | `?tecnologia=Python` |
+| `pagina` | Qual página mostrar (começa em 1) | `?pagina=2` |
+| `por_pagina` | Quantos projetos por página (até 100) | `?por_pagina=5` |
+
+```
+GET /api/projects?tecnologia=Python&pagina=1&por_pagina=5
+```
+
+```json
+{
+  "total": 7,
+  "pagina": 1,
+  "por_pagina": 5,
+  "total_paginas": 2,
+  "projetos": [ ... ]
+}
+```
 
 ### Validações e códigos de erro
 
@@ -89,12 +123,42 @@ Profile 1 ──── N Project N ──── N Technology
 |---|---|
 | `name` (Profile/Technology) ou `title` (Project) ausente ou vazio | 422 |
 | URL inválida (`github_url`, `linkedin_url`, `repository_url`, `demo_url`) | 422 |
+| Nota (`rating`) fora do intervalo de 1 a 5 | 422 |
 | Tipo errado (ex.: texto em `profile_id`) ou JSON mal escrito | 422 |
-| Perfil não encontrado (GET por ID ou `profile_id` do projeto) | 404 |
-| Tecnologia de `technology_ids` não encontrada | 404 |
+| Perfil, projeto ou tecnologia não encontrado | 404 |
+| Endereço que não existe na API | 404 |
+| Método errado no endereço (ex.: DELETE onde só tem GET) | 405 |
 | Tecnologia com nome já cadastrado | 400 |
+| Erro inesperado ou falha no banco de dados | 500 |
 
 Os campos de URL são opcionais, mas quando informados precisam ser endereços completos (ex.: `https://github.com/usuario`).
+
+### Tratamento global de erros
+
+Todo erro da API sai no mesmo formato, em português:
+
+```json
+{
+  "erro": "Não encontrado",
+  "detalhe": "Projeto com id 999 não encontrado.",
+  "codigo": 404
+}
+```
+
+Nos erros de validação (422), vem também a lista de campos com problema:
+
+```json
+{
+  "erro": "Dados inválidos",
+  "detalhe": "Os dados enviados são inválidos.",
+  "codigo": 422,
+  "erros": [
+    { "campo": "rating", "mensagem": "A nota precisa ser um número de 1 a 5." }
+  ]
+}
+```
+
+Detalhes técnicos de erros internos ficam apenas no log do servidor, nunca na resposta.
 
 ## Instalação (Windows)
 
@@ -141,6 +205,26 @@ Exemplo — cadastrar um projeto (`POST /api/projects`):
 
 Com a API rodando, acesse http://127.0.0.1:8000/docs.
 Lá aparecem todos os endpoints. Para testar: clique no endpoint → **Try it out** → preencha → **Execute**.
+
+## Deploy em produção
+
+A API roda na nuvem com **deploy contínuo**: a cada commit na branch `main`, o
+Render publica a versão nova automaticamente.
+
+| Parte | Serviço |
+|---|---|
+| Banco de dados PostgreSQL | Supabase |
+| API | Render (plano gratuito) |
+
+As credenciais **não ficam no código**. A aplicação lê a variável de ambiente
+`DATABASE_URL`, configurada no painel do Render. Quando essa variável não existe
+(no computador de casa), a API usa o SQLite automaticamente — ver
+[app/database.py](app/database.py).
+
+O passo a passo completo para publicar está em **GUIA_DEPLOY.pdf**.
+
+> No plano gratuito do Render a API dorme depois de 15 minutos sem uso.
+> A primeira visita depois disso demora cerca de 50 segundos para responder.
 
 ## Estrutura do projeto
 

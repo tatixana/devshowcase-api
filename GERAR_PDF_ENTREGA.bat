@@ -20,9 +20,20 @@ echo  (para colar: clique com o botao direito)
 echo.
 
 set "link="
-set /p link=  Link:
+set /p link=  Link do YouTube:
 
 if "%link%"=="" goto sem_link
+
+echo.
+echo  --------------------------------------------
+echo  Link da API publicada na nuvem (Render).
+echo.
+echo  So a ETAPA 2 precisa disso.
+echo  Na etapa 1, deixe em branco e aperte Enter.
+echo.
+
+set "api="
+set /p api=  Link da API (ou so Enter para pular):
 
 if not exist ".venv\Scripts\python.exe" goto sem_ambiente
 
@@ -35,7 +46,11 @@ if errorlevel 1 (
 )
 
 echo  Gerando...
-".venv\Scripts\python.exe" gerar_pdf.py entrega "%link%"
+if "%api%"=="" (
+    ".venv\Scripts\python.exe" gerar_pdf.py entrega "%link%"
+) else (
+    ".venv\Scripts\python.exe" gerar_pdf.py entrega "%link%" "%api%"
+)
 if errorlevel 1 goto erro
 
 color 0A

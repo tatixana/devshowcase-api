@@ -1,10 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
+
+
+def buscar_projeto_ou_404(project_id: int, db: Session) -> models.Project:
+    """Busca o projeto pelo id. Se não existir, responde 404."""
+    project = db.get(models.Project, project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=404, detail=f"Projeto com id {project_id} não encontrado."
+        )
+    return project
 
 
 @router.post("", response_model=schemas.ProjectResponse, status_code=201)
@@ -44,6 +55,97 @@ def criar_project(dados: schemas.ProjectCreate, db: Session = Depends(get_db)):
     return project
 
 
-@router.get("", response_model=list[schemas.ProjectResponse])
-def listar_projects(db: Session = Depends(get_db)):
-    return db.query(models.Project).order_by(models.Project.id).all()
+@router.get("", response_model=schemas.ProjectsPage | list[schemas.ProjectResponse])
+def listar_projects(
+    db: Session = Depends(get_db),
+    tecnologia: str | None = Query(
+        default=None, description="Filtra pelo nome da tecnologia. Ex.: Python"
+    ),
+    pagina: int = Query(default=1, ge=1, description="Número da página"),
+    por_pagina: int | None = Query(
+        default=None, ge=1, le=100, description="Quantos projetos por página"
+    ),
+):
+    """Lista os projetos.
+
+    Sem nenhum parâmetro devolve a lista completa.
+    Informando `tecnologia`, `pagina` ou `por_pagina` devolve o resultado em páginas.
+    """
+    consulta = db.query(models.Project)
+
+    # Filtro por tecnologia: junta com a tabela de tecnologias e compara o nome.
+    if tecnologia is not None:
+        consulta = consulta.join(models.Project.technologies).filter(
+            func.lower(models.Technology.name) == tecnologia.strip().lower()
+        )
+
+    consulta = consulta.order_by(models.Project.id)
+
+    # Sem filtro e sem paginação: devolve a lista simples.
+    if tecnologia is None and por_pagina is None and pagina == 1:
+        return consulta.all()
+
+    total = consulta.count()
+    tamanho = por_pagina or 10
+    total_paginas = max(1, (total + tamanho - 1) // tamanho)
+    projetos = consulta.offset((pagina - 1) * tamanho).limit(tamanho).all()
+
+    return schemas.ProjectsPage(
+        total=total,
+        pagina=pagina,
+        por_pagina=tamanho,
+        total_paginas=total_paginas,
+        projetos=projetos,
+    )
+
+
+@router.post(
+    "/{project_id}/feedbacks",
+    response_model=schemas.FeedbackCriadoResponse,
+    status_code=201,
+)
+def criar_feedback(
+    project_id: int, dados: schemas.FeedbackCreate, db: Session = Depends(get_db)
+):
+    """Cadastra um feedback (nota de 1 a 5 e comentário) e atualiza a nota média."""
+    project = buscar_projeto_ou_404(project_id, db)
+
+    feedback = models.Feedback(
+        author_name=dados.author_name,
+        comment=dados.comment,
+        rating=dados.rating,
+        project=project,
+    )
+    db.add(feedback)
+    db.flush()  # grava o feedback antes de recalcular a média
+
+    # Recalcula a nota média do projeto com todos os feedbacks dele.
+    notas = [f.rating for f in project.feedbacks]
+    project.rating_average = round(sum(notas) / len(notas), 2)
+
+    db.commit()
+    db.refresh(feedback)
+    db.refresh(project)
+
+    return schemas.FeedbackCriadoResponse(
+        feedback=feedback,
+        rating_average=project.rating_average,
+        total_feedbacks=len(notas),
+    )
+
+
+@router.get("/{project_id}/feedbacks", response_model=list[schemas.FeedbackResponse])
+def listar_feedbacks(project_id: int, db: Session = Depends(get_db)):
+    """Lista os feedbacks de um projeto."""
+    project = buscar_projeto_ou_404(project_id, db)
+    return sorted(project.feedbacks, key=lambda f: f.id)
+
+
+@router.put("/{project_id}/upvote", response_model=schemas.ProjectResponse)
+def dar_upvote(project_id: int, db: Session = Depends(get_db)):
+    """Soma uma curtida no projeto."""
+    project = buscar_projeto_ou_404(project_id, db)
+    project.upvotes += 1
+    db.commit()
+    db.refresh(project)
+    return project
