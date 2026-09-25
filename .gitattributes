@@ -1,0 +1,9 @@
+# Arquivos binarios: o Git nao pode mexer nas quebras de linha,
+# senao o arquivo chega corrompido para quem baixar.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.db  binary
+
+# Scripts do Windows precisam de quebra de linha CRLF
+*.bat text eol=crlf
