@@ -6,18 +6,18 @@ Guia para quem está começando. Faça um passo de cada vez e só vá para o pr�
 
 ## Passo 0 — Pegar o projeto
 
+O projeto está publicado em: **https://github.com/tatixana/devshowcase-api**
+
 **Opção A — pelo GitHub (sem Git):**
-1. Abra a página do repositório no GitHub.
+1. Abra a página do repositório: https://github.com/tatixana/devshowcase-api
 2. Clique no botão verde **Code** → **Download ZIP**.
 3. Extraia o ZIP (botão direito → **Extrair tudo**).
 
 **Opção B — com Git:**
 
 ```bash
-git clone https://github.com/USUARIO/devshowcase-api.git
+git clone https://github.com/tatixana/devshowcase-api.git
 ```
-
-(troque `USUARIO` pelo usuário do GitHub onde o projeto foi publicado)
 
 ---
 

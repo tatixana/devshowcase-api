@@ -189,7 +189,7 @@
 ### 6:20 – 6:45 — GitHub
 
 - **Integrante:** Tatilane
-- **Ação:** abrir o navegador na página do repositório no GitHub e rolar até o README.
+- **Ação:** abrir o navegador em **https://github.com/tatixana/devshowcase-api** e rolar até o README.
 - **Na tela:** o repositório público `devshowcase-api` com as pastas e o README.
 - **Duração:** 25 segundos.
 

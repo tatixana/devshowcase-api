@@ -4,6 +4,8 @@ API REST para cadastrar **perfis de desenvolvedores**, seus **projetos**, as **t
 
 Trabalho acadêmico: **Modelagem de domínio, persistência e endpoints básicos.**
 
+Repositório: https://github.com/tatixana/devshowcase-api
+
 ## Objetivo
 
 Iniciar o backend da plataforma DevShowcase com:
