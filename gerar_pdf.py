@@ -396,79 +396,77 @@ def gerar_deploy():
 
     h = [
         Paragraph("Guia de deploy", TITULO),
-        Paragraph("Colocar a DevShowcase API no ar, de graça", SUB),
+        Paragraph("Publicar a DevShowcase API no Render", SUB),
         Paragraph(
-            "São duas contas gratuitas: o <b>Supabase</b> guarda o banco de dados "
-            "PostgreSQL, e o <b>Render</b> publica a API. Nenhuma das duas pede "
-            "cartão de crédito. Leva mais ou menos 30 minutos.", TXT),
+            "O banco de dados PostgreSQL no <b>Supabase</b> já está criado e com as "
+            "tabelas prontas. Falta publicar a API no <b>Render</b>, que é gratuito "
+            "e não pede cartão de crédito. Leva uns 15 minutos.", TXT),
         Paragraph(
-            "Faça na ordem: primeiro o banco (Parte 1), depois a API (Parte 2). "
-            "A Parte 2 precisa de uma informação que só aparece na Parte 1.", PEQ),
+            "Faça na ordem: primeiro pegue a senha do banco (Parte 1), depois publique "
+            "a API (Parte 2). A Parte 2 precisa da senha da Parte 1.", PEQ),
         linha(),
 
         # ------------------------------------------------ parte 1
-        Paragraph("Parte 1 &ndash; Criar o banco no Supabase", H1),
+        Paragraph("Parte 1 &ndash; O banco no Supabase (JÁ ESTÁ PRONTO)", H1),
+        Paragraph(
+            "O banco de dados já foi criado e configurado. Não precisa fazer nada "
+            "aqui, só pegar a senha no Passo 1.", TXT),
+        Spacer(1, 4),
+        Paragraph(
+            "&bull; <b>Projeto:</b> devshowcase-api<br/>"
+            "&bull; <b>Região:</b> South America (São Paulo)<br/>"
+            "&bull; <b>Banco:</b> PostgreSQL 17<br/>"
+            "&bull; <b>Tabelas criadas:</b> profiles, technologies, projects, "
+            "feedbacks e project_technologies<br/>"
+            "&bull; <b>Segurança:</b> RLS ligado, bloqueando o acesso direto às "
+            "tabelas por fora da nossa API", TXT),
 
-        Paragraph("Passo 1. Criar a conta", PASSO),
+        Paragraph("Passo 1. Pegar a senha do banco", PASSO),
         Paragraph(
-            "Entre em <b>supabase.com</b> e clique em <b>Start your project</b>. "
-            "Pode entrar com a conta do GitHub (a mesma da Tatilane) &ndash; é o mais "
-            "rápido, porque já vai estar logada.", TXT),
+            "A senha do banco é secreta e não fica guardada em lugar nenhum do "
+            "projeto. Vocês precisam gerar uma nova:", TXT),
+        Paragraph(
+            "1. Entre em <b>supabase.com</b> e abra o projeto <b>devshowcase-api</b>.<br/>"
+            "2. No menu da esquerda, clique na engrenagem <b>Settings</b>.<br/>"
+            "3. Clique em <b>Database</b>.<br/>"
+            "4. Procure <b>Database password</b> e clique em "
+            "<b>Reset database password</b>.<br/>"
+            "5. Clique em <b>Generate a password</b> e depois em "
+            "<b>Reset password</b>.<br/>"
+            "6. <b>Copie a senha para um bloco de notas.</b> Ela não aparece de novo.", TXT),
 
-        Paragraph("Passo 2. Criar o projeto", PASSO),
+        Paragraph("Passo 2. Montar o endereço de conexão", PASSO),
         Paragraph(
-            "Clique em <b>New project</b> e preencha:", TXT),
-        Paragraph(
-            "&bull; <b>Name:</b> devshowcase<br/>"
-            "&bull; <b>Database Password:</b> clique em <b>Generate a password</b> e "
-            "<b>copie essa senha para um bloco de notas</b>. Você vai precisar dela "
-            "no Passo 3.<br/>"
-            "&bull; <b>Region:</b> deixe a que vier, ou escolha South America (São Paulo).", TXT),
-        Paragraph(
-            "Clique em <b>Create new project</b> e espere. Demora uns 2 minutos "
-            "enquanto o banco é criado.", TXT),
-        Paragraph(
-            "ATENÇÃO: essa senha não aparece de novo depois. Se perder, dá para "
-            "gerar outra em Settings &rarr; Database &rarr; Reset database password.", AVISO),
-
-        Paragraph("Passo 3. Copiar o endereço do banco", PASSO),
-        Paragraph(
-            "Com o projeto criado, clique no botão <b>Connect</b> (fica no topo da "
-            "página).", TXT),
+            "Ainda no Supabase, clique no botão <b>Connect</b> (no topo da página).", TXT),
         Paragraph(
             "Procure a opção <b>Session pooler</b> e copie o endereço que aparece "
-            "embaixo dela. Ele começa com <b>postgresql://</b> e é parecido com isto:", TXT),
+            "embaixo dela. É parecido com isto:", TXT),
         Paragraph(
-            "postgresql://postgres.abcdefgh:[YOUR-PASSWORD]@aws-0-sa-east-1."
-            "pooler.supabase.com:5432/postgres", CODE),
+            "postgresql://postgres.lksrooimwlcduscjtrdk:[YOUR-PASSWORD]"
+            "@aws-0-sa-east-1.pooler.supabase.com:5432/postgres", CODE),
         Paragraph(
-            "No lugar de <b>[YOUR-PASSWORD]</b> (incluindo os colchetes), escreva a "
-            "senha que você copiou no Passo 2. O endereço final fica assim:", TXT),
-        Paragraph(
-            "postgresql://postgres.abcdefgh:SuaSenhaAqui@aws-0-sa-east-1."
-            "pooler.supabase.com:5432/postgres", CODE),
-        Paragraph(
-            "Guarde esse endereço completo no bloco de notas. Ele é a "
-            "<b>DATABASE_URL</b> e será usado no Passo 6.", TXT),
+            "Troque <b>[YOUR-PASSWORD]</b> (apagando também os colchetes) pela senha "
+            "que você copiou no Passo 1. Guarde esse endereço completo: ele é a "
+            "<b>DATABASE_URL</b> e vai ser usado no Passo 5.", TXT),
         Paragraph(
             "Use o <b>Session pooler</b>, não o Direct connection. O Render não "
             "consegue se conectar pelo Direct connection.", AVISO),
         Paragraph(
             "Essa senha é uma credencial: não coloquem em nenhum arquivo do projeto, "
-            "não mandem para o GitHub e não mostrem na tela durante o vídeo.", AVISO),
+            "não mandem para o GitHub e não deixem aparecer na tela durante o vídeo.", AVISO),
 
         PageBreak(),
 
         # ------------------------------------------------ parte 2
         Paragraph("Parte 2 &ndash; Publicar a API no Render", H1),
 
-        Paragraph("Passo 4. Criar a conta", PASSO),
+        Paragraph("Passo 3. Criar a conta no Render", PASSO),
         Paragraph(
             "Entre em <b>render.com</b> e clique em <b>Get Started</b>. "
             "Escolha entrar com o <b>GitHub</b>, usando a conta da Tatilane "
             "(a mesma dona do repositório).", TXT),
 
-        Paragraph("Passo 5. Criar o serviço da API", PASSO),
+        Paragraph("Passo 4. Criar o serviço da API", PASSO),
         Paragraph(
             "No painel, clique em <b>Add new</b> &rarr; <b>Web Service</b>.", TXT),
         Paragraph(
@@ -487,18 +485,18 @@ def gerar_deploy():
             "&bull; <b>Start Command:</b> uvicorn app.main:app --host 0.0.0.0 --port $PORT<br/>"
             "&bull; <b>Instance Type:</b> Free", TXT),
 
-        Paragraph("Passo 6. Colocar a senha do banco", PASSO),
+        Paragraph("Passo 5. Colocar o endereço do banco", PASSO),
         Paragraph(
             "Ainda na mesma tela, procure <b>Environment Variables</b> "
             "(ou <b>Advanced</b> &rarr; <b>Add Environment Variable</b>) e adicione:", TXT),
         Paragraph(
             "&bull; <b>Key (nome):</b> DATABASE_URL<br/>"
-            "&bull; <b>Value (valor):</b> o endereço completo que você guardou no Passo 3", TXT),
+            "&bull; <b>Value (valor):</b> o endereço completo que você montou no Passo 2", TXT),
         Paragraph(
             "É assim que as credenciais ficam fora do código: o endereço do banco e a "
             "senha ficam só aqui, no painel do Render.", PEQ),
 
-        Paragraph("Passo 7. Publicar", PASSO),
+        Paragraph("Passo 6. Publicar", PASSO),
         Paragraph(
             "Clique em <b>Deploy Web Service</b> e espere. A primeira publicação "
             "demora de 3 a 5 minutos. Vocês vão ver o texto do build rolando na tela.", TXT),
